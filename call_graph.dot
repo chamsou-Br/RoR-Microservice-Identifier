@@ -1,0 +1,6 @@
+digraph CallGraph {
+add -> divide;
+add -> multiple;
+multiple;
+divide -> multiple;
+}

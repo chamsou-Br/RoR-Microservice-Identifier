@@ -1,0 +1,36 @@
+(class
+  (const nil :Calculator) nil
+  (begin
+    (def :add
+      (args
+        (arg :a)
+        (arg :b))
+      (begin
+        (lvasgn :z
+          (send nil :divide
+            (lvar :a)
+            (lvar :b)))
+        (send nil :multiple
+          (lvar :a)
+          (lvar :b))
+        (send
+          (lvar :a) :+
+          (lvar :b))))
+    (def :multiple
+      (args
+        (arg :a)
+        (arg :b))
+      (send
+        (lvar :a) :*
+        (lvar :b)))
+    (def :divide
+      (args
+        (arg :a)
+        (arg :b))
+      (begin
+        (send nil :multiple
+          (lvar :a)
+          (lvar :b))
+        (send
+          (lvar :a) :/
+          (lvar :b))))))
