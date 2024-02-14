@@ -40,7 +40,6 @@ class ClassNameExtractor < Parser::AST::Processor
   
     def on_send(node)
       receiver, method_name = node.children
-      return unless receiver.nil? # We only consider method calls without a receiver
       @called_methods[current_method] << method_name
       super
     end
@@ -61,9 +60,10 @@ class ClassNameExtractor < Parser::AST::Processor
   
     methods_list.each do |calling_method|
       called_methods_list = called_methods[calling_method] || []
+      filtered_called_methods = called_methods_list.select { |method| methods_list.include?(method) }
       formatted_method = {
         calling_method: calling_method.to_s,
-        called_methods: called_methods_list.map(&:to_s)
+        called_methods: filtered_called_methods.map(&:to_s)
       }
       calls_architecture << formatted_method
     end

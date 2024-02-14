@@ -1,6 +1,12 @@
 digraph CallGraph {
-add -> divide;
-add -> multiple;
-multiple;
-divide -> multiple;
+new;
+confirm_sign_in;
+create -> sign_in_user_with_saml;
+after_sign_in_path_for;
+sign_in_user_with_saml -> log_sso_details;
+sign_in_user_with_saml -> process_response;
+process_response;
+log_sso_details;
+saml_config;
+check_policies;
 }

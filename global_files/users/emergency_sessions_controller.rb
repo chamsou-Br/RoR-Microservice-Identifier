@@ -10,10 +10,9 @@ module Users
     end
 
 
-    
 
     def create
-      Self.confirm_link()
+      ldap()
       @user = current_customer.users.find_by_emergency_token(params[:token]) || User.new
 
       unless @user.process_admin_owner?
@@ -32,17 +31,13 @@ module Users
       sign_in_and_redirect @user, event: :authentication
     end
 
-  
-    
+    protected
 
-    def check_policies
-      if current_customer.saml_auth_strategy?
-        authorize current_customer.settings, :sso_pages?
-      else
-        # no specific check for ldap by intent
-        # it handles all the other cases, not only ldap
-        authorize current_customer.settings, :ldap_login?
-      end
+    def after_sign_in_path_for(_resource)
+      return edit_sso_settings_path if current_customer.saml_auth_strategy?
+      return ldap_settings_path if current_customer.ldap_auth_strategy?
     end
+
+
   end
 end
