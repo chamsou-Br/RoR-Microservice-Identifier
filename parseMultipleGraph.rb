@@ -3,6 +3,47 @@ require 'parser/current'
 
 folder_path = "./global_files"
 
+class ClassNameExtractor < Parser::AST::Processor
+  attr_reader :class_name, :methods_list, :called_methods , :module_name
+
+  def initialize
+    @class_name = nil
+    @methods_list = []
+    @called_methods = Hash.new { |h, k| h[k] = [] }
+    @module_name = nil
+  end
+
+  def on_module(node)
+    module_name_node = node.children[0]
+    @module_name = module_name_node.children[1].to_s if module_name_node.type == :const
+    super
+  end
+
+  def on_class(node)
+    class_name_node = node.children[0]
+    @class_name = class_name_node.children[1] if class_name_node.type == :const
+    super
+  end
+
+  def on_def(node)
+    method_name = node.children[0]
+    @methods_list << method_name if @class_name
+    super
+  end
+
+  def on_send(node)
+    receiver, method_name = node.children
+    return unless receiver.nil? # We only consider method calls without a receiver
+    @called_methods[current_method] << method_name
+    super
+  end
+
+  def current_method
+    @methods_list.last
+  end
+end
+
+
 def count_files(folder_path)
     file_count = 0
     Dir.glob(File.join(folder_path, "*")).each do |item|
@@ -34,46 +75,6 @@ def getFilesFromFolder(folder_path)
     end
   
     files_list
-  end
-
-  class ClassNameExtractor < Parser::AST::Processor
-    attr_reader :class_name, :methods_list, :called_methods , :module_name
-  
-    def initialize
-      @class_name = nil
-      @methods_list = []
-      @called_methods = Hash.new { |h, k| h[k] = [] }
-      @module_name = nil
-    end
-
-    def on_module(node)
-      module_name_node = node.children[0]
-      @module_name = module_name_node.children[1].to_s if module_name_node.type == :const
-      super
-    end
-  
-    def on_class(node)
-      class_name_node = node.children[0]
-      @class_name = class_name_node.children[1] if class_name_node.type == :const
-      super
-    end
-  
-    def on_def(node)
-      method_name = node.children[0]
-      @methods_list << method_name if @class_name
-      super
-    end
-  
-    def on_send(node)
-      receiver, method_name = node.children
-      return unless receiver.nil? # We only consider method calls without a receiver
-      @called_methods[current_method] << method_name
-      super
-    end
-  
-    def current_method
-      @methods_list.last
-    end
   end
 
   def get_class_info(ast)
@@ -199,15 +200,12 @@ for i in 0..(all_dots.length-1)
     file_name = get_file_name(file_path)
 
     class_structure = all_dots[i]
-    puts "\n before \n"
-    puts class_structure
+
 
     class_structure[:methods].each do |method|
         method[:called_methods].select! { |m| all_methods.include?(m.to_sym) }
     end
 
-    puts "\n after \n"
-    puts class_structure
 
     dot_structure = geDotFileObject(class_structure) 
 

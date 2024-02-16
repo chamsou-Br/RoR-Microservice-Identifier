@@ -4,6 +4,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   before_action :check_policies
 
   def ldap
+    testtesttest.sign_in_user_with_saml()
     process_auth_hash(request.env["omniauth.auth"])
     log_ldap_details(request.env["omniauth.auth"])
     if @user.present? && @user.persisted? && @user.active_for_authentication?
