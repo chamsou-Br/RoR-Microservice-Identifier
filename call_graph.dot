@@ -1,18 +1,5 @@
 digraph CallGraph {
-ranksep=10;
-nodesep=1;
-EmergencySessionsController_create -> OmniauthCallbacksController_ldap;
-OmniauthCallbacksController_ldap -> SamlSessionsController_sign_in_user_with_saml;
-OmniauthCallbacksController_ldap -> OmniauthCallbacksController_process_auth_hash;
-OmniauthCallbacksController_ldap -> OmniauthCallbacksController_log_ldap_details;
-OmniauthCallbacksController_ldap -> OmniauthCallbacksController_save_preferred_server;
-OmniauthCallbacksController_ldap_settings -> OmniauthCallbacksController_ldap_settings;
-OmniauthCallbacksController_process_auth_hash -> OmniauthCallbacksController_ldap_settings;
-OmniauthCallbacksController_log_ldap_details -> OmniauthCallbacksController_filter_passwords;
-SamlSessionsController_new -> EmergencySessionsController_create;
-SamlSessionsController_new -> SamlSessionsController_saml_config;
-SamlSessionsController_create -> SamlSessionsController_saml_config;
-SamlSessionsController_create -> SamlSessionsController_sign_in_user_with_saml;
-SamlSessionsController_sign_in_user_with_saml -> SamlSessionsController_log_sso_details;
-SamlSessionsController_sign_in_user_with_saml -> SamlSessionsController_process_response;
+wording;
+new -> new;
+create -> new;
 }

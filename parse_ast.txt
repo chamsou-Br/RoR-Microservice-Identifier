@@ -1,280 +1,30 @@
-(module
-  (const nil :Users)
-  (class
-    (const nil :SamlSessionsController)
-    (const
-      (const nil :Devise) :SamlSessionsController)
-    (begin
-      (send nil :before_action
-        (sym :check_policies))
-      (def :new
-        (args)
-        (rescue
+(class
+  (const nil :ShippingProvider) nil
+  (begin
+    (def :ship
+      (args
+        (arg :product))
+      (send nil :puts
+        (dstr
+          (str "Product ")
           (begin
-            (lvasgn :request
-              (send
-                (const
-                  (const
-                    (const nil :OneLogin) :RubySaml) :Authrequest) :new))
-            (lvasgn :action
-              (send
-                (lvar :request) :create
-                (send nil :saml_config)
-                (hash
-                  (pair
-                    (str "RelayState")
-                    (send nil :user_sso_session_path)))))
-            (send nil :redirect_to
-              (lvar :action)))
-          (resbody
-            (array
-              (const
-                (const
-                  (const nil :OpenSSL) :X509) :CertificateError)) nil
-            (begin
-              (ivasgn :@error
-                (sym :certificate_error))
-              (send nil :render
-                (str "devise/shared/sso_login_info_or_error")))) nil))
-      (def :confirm_sign_in
-        (args)
-        (send nil :render
-          (str "devise/shared/sso_login_info_or_error")))
-      (def :create
-        (args)
-        (begin
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str ">>>>>>>>>>>>>>>> params: ")
-              (begin
-                (send nil :params))))
-          (lvasgn :response
-            (send
-              (const
-                (const
-                  (const nil :OneLogin) :RubySaml) :Response) :new
-              (send
-                (send nil :params) :[]
-                (sym :SAMLResponse))
-              (hash
-                (pair
-                  (sym :settings)
-                  (send nil :saml_config)))))
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str ">>>>>>>>>>>>>>>> response.inspect: ")
-              (begin
-                (send
-                  (lvar :response) :inspect))))
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str "response.errors: ")
-              (begin
-                (send
-                  (send
-                    (lvar :response) :errors) :inspect))))
-          (if
-            (send
-              (lvar :response) :is_valid?)
-            (send nil :sign_in_user_with_saml
-              (lvar :response))
-            (begin
-              (send
-                (send nil :flash) :[]=
-                (sym :error)
-                (dstr
-                  (str "Invalid response: ")
-                  (begin
-                    (send
-                      (send
-                        (lvar :response) :errors) :inspect))))
-              (send nil :redirect_to
-                (send nil :saml_confirm_sign_in_path))))))
-      (send nil :protected)
-      (def :after_sign_in_path_for
-        (args
-          (arg :resource))
-        (begin
-          (if
-            (ivar :@created_user_via_sso)
-            (return
-              (send nil :edit_metadata_users_path)) nil)
-          (zsuper)))
-      (send nil :private)
-      (def :sign_in_user_with_saml
-        (args
-          (arg :response))
-        (begin
-          (send nil :log_sso_details
-            (lvar :response))
-          (send
-            (send nil :session) :[]=
-            (sym :userid)
-            (send
-              (lvar :response) :nameid))
-          (send
-            (send nil :session) :[]=
-            (sym :attributes)
-            (send
-              (lvar :response) :attributes))
-          (send nil :process_response
-            (lvar :response))
-          (if
-            (and
-              (and
-                (send
-                  (ivar :@user) :present?)
-                (send
-                  (ivar :@user) :persisted?))
-              (send
-                (ivar :@user) :active_for_authentication?))
-            (begin
-              (if
-                (send
-                  (ivar :@user) :pending_invitation?)
-                (send
-                  (ivar :@user) :accept_pending_invitation) nil)
-              (send
-                (send nil :flash) :[]=
-                (sym :notice)
-                (send
-                  (const nil :I18n) :t
-                  (str "devise.sessions.signed_in")))
-              (send nil :sign_in_and_redirect
-                (ivar :@user)
-                (hash
-                  (pair
-                    (sym :event)
-                    (sym :authentication)))))
-            (send nil :render
-              (str "devise/shared/sso_login_info_or_error")))))
-      (def :process_response
-        (args
-          (arg :response))
-        (begin
-          (lvasgn :normalized_attrs
-            (send
-              (send
-                (const nil :SamlNormalizerService) :new
-                (send
-                  (lvar :response) :attributes)
-                (send nil :current_customer)) :normalize))
-          (lvasgn :saml_data
-            (send
-              (send
-                (const nil :ExternalUsersService) :new
-                (lvar :normalized_attrs)
-                (send nil :current_customer)) :process_data))
-          (ivasgn :@user
-            (send
-              (lvar :saml_data) :[]
-              (sym :user)))
-          (ivasgn :@error
-            (send
-              (lvar :saml_data) :[]
-              (sym :error)))
-          (ivasgn :@created_user_via_sso
-            (or
-              (send
-                (lvar :saml_data) :[]
-                (sym :created_user))
-              (false)))))
-      (def :log_sso_details
-        (args
-          (arg :response))
-        (begin
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str "response.attributes: ")
-              (begin
-                (send
-                  (lvar :response) :attributes))))
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str "sso @user: ")
-              (begin
-                (send
-                  (ivar :@user) :inspect))))
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str "sso @error: ")
-              (begin
-                (ivar :@error))))
-          (send
-            (send nil :logger) :info
-            (dstr
-              (str "sso @created_user_via_sso: ")
-              (begin
-                (ivar :@created_user_via_sso))))))
-      (def :saml_config
-        (args
-          (optarg :_idp_entity_id
-            (nil)))
-        (begin
-          (lvasgn :sso_settings
-            (send
-              (send
-                (send nil :current_customer) :settings) :sso_settings))
-          (lvasgn :settings
-            (send
-              (const
-                (const
-                  (const nil :OneLogin) :RubySaml) :Settings) :new))
-          (send
-            (lvar :settings) :assertion_consumer_service_binding=
-            (str "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"))
-          (send
-            (lvar :settings) :name_identifier_format=
-            (str "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"))
-          (send
-            (lvar :settings) :idp_slo_target_url=
-            (send
-              (lvar :sso_settings) :slo_url))
-          (send
-            (lvar :settings) :idp_sso_target_url=
-            (send
-              (lvar :sso_settings) :sso_url))
-          (lvasgn :cert
-            (send
-              (send
-                (send
-                  (send
-                    (const
-                      (const
-                        (const nil :OpenSSL) :X509) :Certificate) :new
-                    (send
-                      (lvar :sso_settings) :cert_x509)) :to_pem) :to_s) :chomp))
-          (send
-            (lvar :settings) :certificate=
-            (lvar :cert))
-          (send
-            (lvar :settings) :idp_cert=
-            (lvar :cert))
-          (send
-            (lvar :settings) :assertion_consumer_service_url=
-            (send
-              (send
-                (const nil :URI) :join
-                (send
-                  (send nil :current_customer) :absolute_domain_name)
-                (str "users/saml/auth")) :to_s))
-          (send
-            (lvar :settings) :issuer=
-            (dstr
-              (begin
-                (send
-                  (send nil :current_customer) :absolute_domain_name))
-              (str "/users/saml/metadata")))
-          (lvar :settings)))
-      (def :check_policies
-        (args)
-        (send nil :authorize
-          (send
-            (send nil :current_customer) :settings)
-          (sym :sso_pages?))))))
+            (lvar :product))
+          (str " shipped successfully."))))
+    (def :track_shipment
+      (args
+        (arg :tracking_number))
+      (send nil :puts
+        (dstr
+          (str "Shipment with tracking number ")
+          (begin
+            (lvar :tracking_number))
+          (str " tracked successfully."))))
+    (def :cancel_shipment
+      (args
+        (arg :tracking_number))
+      (send nil :puts
+        (dstr
+          (str "Shipment with tracking number ")
+          (begin
+            (lvar :tracking_number))
+          (str " canceled successfully."))))))

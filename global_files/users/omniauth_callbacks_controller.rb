@@ -34,6 +34,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   private
 
   def ldap_settings
+    after_sign_in_path_for("lll")
     current_customer.settings.ldap_settings.enabled.find(params[:server])
   end
 

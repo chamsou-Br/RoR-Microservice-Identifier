@@ -117,7 +117,7 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
     class_name = structure[:class]
   
     # predefined methods excluded from the call graph
-    not_needed_methods = ['send', 'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
+    not_needed_methods = ['send', 'create' ,'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
                           'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a']
   
     structure[:methods].each do |method|

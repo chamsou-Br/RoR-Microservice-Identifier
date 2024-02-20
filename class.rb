@@ -1,49 +1,68 @@
-# frozen_string_literal: true
+class DocumentsController < ApplicationController
+  include ListableWorkflow
 
-class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-  before_action :check_policies
+  after_action :verify_policy_scoped, only: :index
+  after_action :verify_authorized, except: %i[index favor unfavor favor_one
+                                              unfavor_one unlock lock
+                                              confirm_delete linkable
+                                              confirm_move confirm_author author
+                                              deactivate activate
+                                              check_reference]
 
-  def ldap
-    Saml.sign_in_user_with_saml()
-    process_auth_hash(request.env["omniauth.auth"])
-    log_ldap_details(request.env["omniauth.auth"])
-    if @user.present? && @user.persisted? && @user.active_for_authentication?
-      @user.accept_pending_invitation if @user.pending_invitation?
-      flash[:notice] = I18n.t("devise.sessions.signed_in")
-      save_preferred_server
-      sign_in_and_redirect @user, event: :authentication
-    else
-      render "devise/shared/sso_login_info_or_error", layout: "login_sso_layout"
+  before_action :require_document_in_accept_state, only: [:unlock]
+
+  before_action :check_deactivation,
+                only: %i[show show_properties interactions actors diary
+                         historical]
+
+  # TODO: Remove unused `count` parameter
+  def wording(_count = 1)
+    {
+      # the document has not the required state to be accepted or rejected
+      document_wrong_state: I18n.t("controllers.documents.errors.document_wrong_state"),
+
+      # warns the user that the document is deactivated
+      document_deactivated: I18n.t("controllers.documents.warning.document_deactivated")
+    }
+  end
+
+  def new
+    @document = Document.new
+    authorize @document, :create?
+
+    if params[:directory_id].present?
+      directory = current_customer.root_directory.self_and_descendants.find(params[:directory_id])
+      @document.directory = directory
+    end
+
+    if current_customer.max_graphs_and_docs_reached?
+      @error_max_graphs_and_docs = I18n.t("errors.max_graphs_and_docs_reached")
+    end
+
+    respond_to do |format|
+      format.html {}
+      format.js {}
+      format.json do
+        @submit_format = "json"
+        form_html = render_to_string(partial: "form_new", formats: [:html])
+        render json: { form_new: form_html }
+      end
     end
   end
 
+  # TODO: Separate method into smaller private methods
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+  def create
+    @document = current_customer.documents.new(document_params) do |document|
+      document.directory ||= current_customer.root_directory
+      document.author = current_user
+      document.state = Document.states.first
+    end
 
-  def process_auth_hash(auth_hash)
-    normalized_attrs = LdapNormalizerService.new(auth_hash, ldap_settings).normalize
-    ldap_data = ExternalUsersService.new(normalized_attrs, current_customer).process_data
-
-    @user = ldap_data[:user]
-    @error = ldap_data[:error]
-    @created_user = ldap_data[:created_user] || false
-  end
-
-  def log_ldap_details(auth_hash)
-    logger.info "ldap attrs: #{filter_passwords(auth_hash)}"
-    logger.info "ldap @user: #{@user.inspect}"
-    logger.info "ldap @error: #{@error.inspect}"
-    logger.info "ldap @created_user: #{@created_user}"
-  end
-
-  def save_preferred_server
-    return if params["server"].blank?
-
-    cookies[:preferred_ldap_server] = { value: params["server"], expires: 1.year.from_now }
-  end
-
-  def filter_passwords(auth_hash)
-    auth_hash["extra"]["raw_info"][:userpassword] = ["REDACTED"]
-    auth_hash
-  rescue NoMethodError
-    auth_hash
+    begin
+      authorize @document, :create?
+    rescue StandardError
+      @document.errors.add :base, :create_not_allowed
+    end
   end
 end
