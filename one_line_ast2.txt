@@ -1,0 +1,15 @@
+(class
+  (const nil :MyClass) nil
+  (begin
+    (def :method1
+      (args)
+      (send nil :puts
+        (str "This is method 1")))
+    (def :method2
+      (args)
+      (send nil :puts
+        (str "This is method 2")))
+    (def :method3
+      (args)
+      (send nil :puts
+        (str "This is method 3")))))

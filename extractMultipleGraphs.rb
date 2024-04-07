@@ -330,6 +330,9 @@ for i in 0..(files_list.length-1)
     methods: methods_with_calls
   }
 
+  puts class_structure 
+  puts "\n end \n"
+
   dot_structure = geDotFileObject(class_structure) # store table to use it to create the dot file
 
   createDotFile(dot_structure, file_name)

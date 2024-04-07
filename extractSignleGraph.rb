@@ -6,9 +6,11 @@ require "pp"
 ### I am organizing the result in a table that I after use it for making a dotfile and generate
 ### the call graph
 
-ruby_file = './global_files/actors_controller.rb'
-source_code = File.read(ruby_file)
-# Extracting the AST
+# ruby_file = './global_files/actors_controller.rb'
+# source_code = File.read(ruby_file)
+# # Extracting the AST
+source_code =  File.read("./class.rb")
+
 ast = Ripper.sexp(source_code)
 
 #Copying AST in two txt files
@@ -17,7 +19,9 @@ File.write('one_line_ast.txt', ast)
 #   PP.pp(ast, file)
 # end
 
-# Read AST
+
+
+# # Read AST
 ast_tree = File.read("one_line_ast.txt")
 
 #Get class name from ruby ast file
@@ -76,8 +80,7 @@ def getMethodsList(ast_tree, keyword="[:def")
   return methods_list
 end
 
-#------- store methods list in a variable -------#
-methods_list = getMethodsList(ast_tree)
+
 
 
 
@@ -156,18 +159,23 @@ def getMethodWithCalls(method_number, methods_list, keyword1="[:method_add_arg",
   #--- get content of called methods ---#
   actual_method = methods_list[method_number]
   nb_methods =  actual_method.scan(/(?=#{Regexp.escape(keyword1)})/).count
+
+  # this block doesnt have value in single call_graph ------------------------------------------------
+  
   called_methods_code = extract_methods(actual_method, keyword1, nb_methods)
 
   # counting and returning number of arguments for called methods
   arguments_number = []
   for i in 0..(called_methods_code.length-1)
-    argument_count = count_arguments(eval(called_methods_code[i])) # Evaluating the provided code as Ruby data structure
+    argument_count = count_arguments(eval(called_methods_code[i])) 
     arguments_number.push(argument_count)
   end
-  # pp arguments_number
+
+   # this block doesnt have value in single call_graph ----------------------------------------------------
 
   # getting the names of all called methods by a calling method
   called_methods = getMethodsNames(methods_list[method_number], keyword3, keyword2)
+
 
   # structuring my data
   return calls_architecture = {
@@ -177,10 +185,6 @@ def getMethodWithCalls(method_number, methods_list, keyword1="[:method_add_arg",
 end
 
 
-methods_with_calls =[]
-for i in 0..methods_list.length-1
-    methods_with_calls << getMethodWithCalls(i, methods_list)
-end
 
 
 # pp methods_with_calls
@@ -242,6 +246,17 @@ end
 
 
 
+#------- store methods list in a variable -------#
+
+
+
+methods_list = getMethodsList(ast_tree)
+
+
+methods_with_calls =[]
+for i in 0..methods_list.length-1
+    methods_with_calls << getMethodWithCalls(i, methods_list)
+end
 
 
 #------- CALLS -------#
@@ -252,7 +267,13 @@ class_structure = {
   class: getClassName(ast_tree),
   methods: methods_with_calls
 }
+
+puts class_structure 
+puts "end clas structure"
 dot_structure = geDotFileObject(class_structure) # store table to use it to create the dot file
 
 createDotFile(dot_structure)
+
 system("dot -Tsvg call_graph.dot -o call_graph.svg")
+
+

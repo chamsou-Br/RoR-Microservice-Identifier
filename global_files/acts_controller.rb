@@ -118,7 +118,7 @@ class ActsController < SpaController
     end
   end
 
-  def update_roles
+  def update_responsibilities
     @act = current_customer.acts.find_by(id: params[:id])
     unless @act
       render json: {
@@ -134,7 +134,7 @@ class ActsController < SpaController
     return if @act.errors.present?
 
     log_operation(@act, "update")
-    notify_update_roles(@act)
+    notify_update_responsibilities(@act)
   end
 
   def destroy

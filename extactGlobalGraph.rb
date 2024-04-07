@@ -285,8 +285,8 @@ def createDotFile(dot_structure, file_name)
 
   File.open(dot_file_path, "a") do |file|
     file.puts 'digraph CallGraph {'
-    file.puts 'ranksep=30;'
-    file.puts 'nodesep=3;'
+    file.puts 'ranksep=10;'
+    file.puts 'nodesep=1;'
     dot_structure.each do |entry|
       file.puts entry
     end
@@ -417,4 +417,3 @@ appendClosingBrace(dot_file_path) # this is to add a closing "}" to the dot file
 # Generate the svg graph
 system("dot -Tsvg call_graph.dot -o global_callGraph.svg")
 
-File.delete(dot_file_path) if File.exist?(dot_file_path)
