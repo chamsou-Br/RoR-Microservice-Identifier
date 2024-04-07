@@ -4,7 +4,7 @@ puts "Enter your file path"
 path = gets.chomp
 puts "You entered: #{path}"
 
-puts "\n-------------------------------   START   -------------------------------\n\n"
+
 source_code = File.read(path)
 
 buffer = Parser::Source::Buffer.new(path).tap do |buffer| 
@@ -17,13 +17,21 @@ ast = parser.parse(buffer)
 
 File.write('parse_ast.txt', ast)
 
-class ClassNameExtractor < Parser::AST::Processor
-    attr_reader :class_name, :methods_list, :called_methods
+  class ASTExtractor < Parser::AST::Processor
+    attr_reader :class_name, :methods_list, :called_methods , :module_name , :receivers
   
     def initialize
       @class_name = nil
       @methods_list = []
       @called_methods = Hash.new { |h, k| h[k] = [] }
+      @receivers = Hash.new { |h, k| h[k] = [] }
+      @module_name = nil
+    end
+  
+    def on_module(node)
+      module_name_node = node.children[0]
+      @module_name = module_name_node.children[1].to_s if module_name_node.type == :const
+      super
     end
   
     def on_class(node)
@@ -40,7 +48,13 @@ class ClassNameExtractor < Parser::AST::Processor
   
     def on_send(node)
       receiver, method_name = node.children
+      if receiver && receiver.type == :send && receiver.children[1].is_a?(Symbol)
+        receiver_name = receiver.children[1].to_s
+      else
+        receiver_name = receiver.nil? ? 'self' : process(receiver)
+      end
       @called_methods[current_method] << method_name
+      @receivers[current_method] << receiver_name
       super
     end
   
@@ -50,7 +64,7 @@ class ClassNameExtractor < Parser::AST::Processor
   end
   
   def get_class_info(ast)
-    extractor = ClassNameExtractor.new
+    extractor = ASTExtractor.new
     extractor.process(ast)
     [extractor.class_name, extractor.methods_list, extractor.called_methods]
   end
@@ -112,8 +126,13 @@ class ClassNameExtractor < Parser::AST::Processor
   end
 
   def createDotFile(dot_structure)
-    File.open("call_graph.dot", "w") do |file|
-        file.puts 'digraph CallGraph {'
+    File.open("./output/call_graph.dot", "w") do |file|
+      file.puts 'digraph CallGraph {'
+      file.puts "node [shape=box, style=filled, fillcolor=lightblue  , color=white]"
+      file.puts 'ranksep=5;'
+      file.puts 'nodesep=0.5;'
+      file.puts "node [fontname=Arial];"
+      file.puts "edge [fontname=Arial];"
         dot_structure.each do |entry|
             file.puts entry
         end
@@ -122,9 +141,9 @@ class ClassNameExtractor < Parser::AST::Processor
   end
   
   class_name, methods_list, called_methods = get_class_info(ast)
-  puts "Class name: #{class_name.inspect}"
-  puts "Methods: #{methods_list.inspect}"
-  puts "Called methods: #{called_methods.inspect}"
+  puts "\nClass name: #{class_name.inspect}"
+  puts "\nMethods: #{methods_list.inspect}"
+  puts "\nCalled methods: #{called_methods.inspect}"
 
   class_structure = {
   class: class_name,
@@ -135,8 +154,10 @@ dot_structure = geDotFileObject(class_structure)
 
 createDotFile(dot_structure)
 
-puts "\n-------------------------------   END   -------------------------------\n"
 
-system("dot -Tsvg call_graph.dot -o call_graph.svg")
+
+system("dot -Tsvg ./output/call_graph.dot -o ./output/call_graph.svg")
+
+puts "\n\ file done => ./output/call_graph.dot => ./output/call_graph.svg "
 
   
