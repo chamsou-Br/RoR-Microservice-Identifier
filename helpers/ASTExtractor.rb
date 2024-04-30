@@ -31,7 +31,7 @@ class ASTExtractor < Parser::AST::Processor
     def on_def(node)
       method_name, args, _body = node.children
       num_args = args.children.size
-      @methods_list << { name: method_name.to_s , num_args: num_args } if @class_name
+      @methods_list << { name: method_name.to_s , num_args: num_args } if @class_name || @module_name
       super
     end
   
@@ -59,5 +59,6 @@ class ASTExtractor < Parser::AST::Processor
   def get_class_info(ast)
     extractor = ASTExtractor.new
     extractor.process(ast)
-    [extractor.class_name, extractor.methods_list , extractor.called_methods , extractor.module_name , extractor.receivers ]
+    class_name = extractor.class_name || extractor.module_name
+    [class_name, extractor.methods_list , extractor.called_methods , extractor.module_name , extractor.receivers ]
   end

@@ -4,8 +4,7 @@ require './helpers/ASTExtractor'
 require './helpers/FilesAccess'
 require './helpers/DotFile'
 
-folder_path = "./input/controllers"
-
+folder_path = "./input/classes"
 folder_data_path = "./input/data"
 
 

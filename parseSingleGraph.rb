@@ -1,5 +1,6 @@
 require 'parser/current'
 
+
 puts "Enter your file path"
 path = gets.chomp
 puts "You entered: #{path}"
@@ -14,6 +15,8 @@ end
 parser = Parser::CurrentRuby.new
 
 ast = parser.parse(buffer)
+
+puts ast
 
 File.write('parse_ast.txt', ast)
 
@@ -42,7 +45,7 @@ File.write('parse_ast.txt', ast)
   
     def on_def(node)
       method_name = node.children[0]
-      @methods_list << method_name if @class_name
+      @methods_list << method_name if @class_name || @module_name
       super
     end
   

@@ -30,7 +30,7 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
   
     # predefined methods excluded from the call graph
     not_needed_methods = ['send', 'create' ,'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
-                          'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a']
+                          'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a',"destroy","resource"]
   
     structure[:methods].each do |method|
         called_methods = method[:called_methods]
@@ -40,17 +40,19 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
           if (!method[:called_methods].empty?)
               called_methods.each do |called_method|
                   class_of_called_method = class_of_all_methods[all_methods.index(called_method)] || ""
-                  if (class_of_called_method.to_s != class_name.to_s)
+
+                  if (class_of_called_method.to_s != class_name.to_s && !not_needed_methods.include?(called_method[:name]))
+                    puts "#{class_name} => #{class_of_called_method} => #{called_method}"
                     if (called_method[:name].include?("?"))
                         called_method[:name].sub!("?", "")
-                        dot_line = class_name.to_s +  " -> " + class_of_called_method +  ";"
+                        dot_line = class_name.to_s +  " -> " + class_of_called_method + ";"
                     elsif (called_method[:name].include?("!"))
                         called_method[:name].sub!("!", "")
                         dot_line = class_name.to_s +  " -> " + class_of_called_method + ";"
                     elsif (called_method[:name].length == 1 || not_needed_methods.include?(called_method)) # to remove calls of methods like "t" or "l" + remove calls of "new"
                       dot_line = class_name.to_s + ";"
                     else
-                      dot_line = class_name.to_s  + " -> " + class_of_called_method +  ";"
+                      dot_line = class_name.to_s  + " -> " + class_of_called_method + ";"
                     end
                     desired_table.push(dot_line)
                     desired_table.push("#{class_name.to_s} [shape=box, style=filled, fillcolor=lightblue  , color=white];")

@@ -1,0 +1,32 @@
+<% content_for :title, render_for_html(@resource.title) %>
+<% content_for :sharing_panel do %>
+  <%= render partial: "sharing_panel" %>
+<% end %>
+<% content_for :modals do %>
+  <%= render :partial => "layouts/modal" %>
+<% end %>
+
+<div class='inner-snap'>
+  <%= render 'sharing_tabs', active: 'interactions' %>
+  <div class="partial_content">
+    <div class="main-role animated fadeIn">
+      <div class="properties-form container-interactions">
+        <div class="row">
+          <div class="span12 span-md-12 span-lg-12 span-xs-12">
+            <h3 class="bot_property"><%= t(".titles.linked_graphs") %></h3>
+            <p class="tips"><%= t(".tips.linked_graphs") %></p>
+            <% if @linked_graphs.empty? %>
+              <p class="empty-block"><%= t(".empties.linked_graphs") %></p>
+            <% else %>
+            <div class="span10 span-md-10 span-lg-10 span-xs-12">
+              <div class="row secondary-section">
+                <%=render 'shared/linked_graphs', linked_graphs: @linked_graphs %>
+              </div>
+            </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

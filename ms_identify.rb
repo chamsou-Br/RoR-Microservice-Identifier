@@ -9,7 +9,7 @@ require './helpers/DependencyGraph'
 
 require './helpers/FilesAccess'
 
-folder_path = "./input/controllers"
+folder_path = "./input/classes"
 
 folder_data_path = "./input/data"
 
@@ -25,8 +25,7 @@ folder_data_path = "./input/data"
     end
   end
 
-def getDataEntity(folder_data_path)
-  
+def getDataEntity(folder_data_path)  
   files_list = getFilesFromFolder(folder_data_path) #return paths of all files inside a folder in addition to its children folders
   all_data = []
 
@@ -198,7 +197,7 @@ def identify_msa_condidates(dependencies, dendro)
   msa
 end
 
-def get_dependencies(folder_path)
+def get_classes_info(folder_path)
 
   files_list = getFilesFromFolder(folder_path) #return paths of all files inside a folder in addition to its children folders
  all_methods = []
@@ -246,7 +245,7 @@ def get_dependencies(folder_path)
   [all_dots , all_methods , class_of_all_methods]
 end
 
-def get_results(all_dots , all_methods , class_of_all_methods , data , microservice_file = "./output/microservices")
+def get_results(all_dots , all_methods , class_of_all_methods , data , microservice_file = "./output/microservices" )
 
       not_needed_methods = ['send' ,'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
     'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a']
@@ -268,11 +267,13 @@ def get_results(all_dots , all_methods , class_of_all_methods , data , microserv
           method[:called_methods].select! { |m| all_methods.include?(m) && !not_needed_methods.include?(m[:name].to_s)}
         end
 
+      if (class_name.include?("Controller"))
         class_structure[:receivers].each do |receiver|
           if (data.include?(receiver.to_s))
             @dependences.add_data(class_name, singularize( receiver.to_s))
           end
         end
+      end
 
         class_structure[:methods].each do |method|
             method[:called_methods].each do |called_method|
@@ -322,10 +323,11 @@ end
   
   
 
-def msa_condidate_with_data_cohesion(n , data_dependence , microservice_file = "./output/microservices")
+def msa_condidate_with_data_cohesion(n , depend , microservice_file = "./output/microservices")
   data_entity_counts = Hash.new(0)
   not_needed_data_entity = ["Color"]
   # Parcourir chaque microservice et compter le nombre d'occurrences de chaque data entity
+  data_dependence = depend.data_count
   data_dependence.dup.each do |class_name, data_entities|
     data_entities.each do |data , count|
       if (!not_needed_data_entity.include?(data))
@@ -333,11 +335,9 @@ def msa_condidate_with_data_cohesion(n , data_dependence , microservice_file = "
       end
     end
   end
+
   # Sélectionner les n data entities les plus utilisées
   top_data_entities = data_entity_counts.sort_by { |data_entity, count| -count }.take(n).to_h
-
-  puts "\n msa condidats => ---------------------------------------\n"
-  pp top_data_entities
 
   # selectioner les microservices
   microservices = Hash.new { |hash, key| hash[key] = [] } 
@@ -355,36 +355,68 @@ def msa_condidate_with_data_cohesion(n , data_dependence , microservice_file = "
     end
     
   end
+  
   File.open(microservice_file + ".dot", "w") do |file|
     file.puts "digraph Microservices {" 
     # Iterate over each key-value pair in the hash
+    ms_num = 1
     microservices.each_key do |microservice|
-      # Add subgraph for microservice
-      file.puts "  subgraph #{microservice}_microservice {"
+      file.puts "  subgraph microservice_#{ms_num} {"
+      ms_num = ms_num + 1
 
-      # Add nodes for classes
       microservices[microservice].each do |class_name|
         file.puts "    #{class_name};"
       end
 
-      # Close the subgraph
       file.puts "  }"
     end
 
-    # Close the dot file
     file.puts "}"
 
   end
   return microservices 
 end
 
+def getClassesOfMs (depend , microservices ,  ms_classes_file = "./output/microservices_classes") 
+  File.open(ms_classes_file + ".dot", "w") do |file|
+    file.puts "digraph Microservices {" 
+    # Iterate over each key-value pair in the hash
+    ms_num = 1
+    microservices.each_key do |microservice|
+      file.puts "  subgraph microservice_#{ms_num} {"
+      ms_num = ms_num + 1
+      class_dependeces = []
+      microservices[microservice].each do |class_name|
+        file.puts "    #{class_name};"
+        depend.graph[class_name].each do |class_name_depend, count|
+          if (!class_name_depend.include?("Controller") && !class_dependeces.include?(class_name_depend))
+            class_dependeces << class_name_depend
+          end
+        end
+      end
+      class_dependeces.each do |class_name_depend|
+        file.puts "    #{class_name_depend};"
+      end
+      file.puts "  }"
+    end
+    file.puts "}"
+
+  end
+
+end
+
+
+
 data = getDataEntity(folder_data_path)
 
-all_dots ,  all_methods  , class_of_all_methods = get_dependencies(folder_path)
+all_dots ,  all_methods  , class_of_all_methods = get_classes_info(folder_path)
 
 dendro , msa , depend = get_results(all_dots , all_methods , class_of_all_methods  , data)
 
-microservices = msa_condidate_with_data_cohesion(8 , depend.data_count)
+microservices = msa_condidate_with_data_cohesion(8 , depend)
+
+getClassesOfMs(depend,microservices)
+
 
 puts "\n\ file done => ./output/microservice.dot"
 
