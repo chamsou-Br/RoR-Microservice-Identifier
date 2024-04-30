@@ -1,4 +1,5 @@
 class Buyer
+  
     attr_reader :name
   
     def initialize(name)

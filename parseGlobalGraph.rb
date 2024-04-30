@@ -88,7 +88,7 @@ def get_dependencies(folder_path)
     
       ast = parser.parse(buffer)
     
-      File.write('parse_ast.txt', ast)
+      File.write('./output/parse_ast.txt', ast)
 
       class_name, methods_list, called_methods , module_name , receivers , method  = get_class_info(ast)
 

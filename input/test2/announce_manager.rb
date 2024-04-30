@@ -7,7 +7,6 @@ class AnnounceManager
     end
   
     def update_announce_manager(announce_id, product)
-
       # Code to update an announcement for the product
       puts "Announcement #{announce_id} updated for #{product}."
     end

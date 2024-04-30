@@ -1,41 +1,82 @@
-class DependencyGraph
+class DependencyAnalyzer
 
-    attr_reader :graph , :data ,  :data_count
-    def initialize(classes)
+    attr_reader :graph , :data ,  :data_count , :classNodes , :dataNodes
+    def initialize(classes , dataNodes)
+      @classNodes = classes
+      @dataNodes = dataNodes
       @graph = Hash.new { |hash, key| hash[key] = {} }
       @data = Hash.new { |hash, key| hash[key] = {} } 
       @data_count = Hash.new { |hash, key| hash[key] = {} } 
-      classes.each do |class_name|
-        @graph[class_name.to_s] = {}  
-        @data[class_name.to_s] = []    
-        @data_count[class_name.to_s] = {}
+      classes.each do |classNode|
+        @graph[classNode.class_name] = {}  
+        @data[classNode.class_name] = []    
+        @data_count[classNode.class_name] = {}
       end     
+      generate_graph()
     end
+
+
+  def generate_graph()
+
+      not_needed_methods = ['send' ,'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
+      'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a']
+
+      @classNodes.each do |classNode|
+
+        class_structure = {
+          module: classNode.module_name,
+          class: classNode.class_name,
+          methods: format_calls_architecture(classNode)  , 
+          receivers: classNode.data_entities
+        }
+
+        if (classNode.class_name.include?("Controller"))
+          class_structure[:receivers].each do |receiver|
+            @dataNodes.each do |dataNode|
+              if (dataNode.class_name == receiver.to_s) 
+                add_data(classNode.class_name, singularize( receiver.to_s))
+              end
+            end
+          end
+        end
+
+        class_structure[:methods].each do |method|
+          method[:called_methods].each do |called_method|
+            if (!not_needed_methods.include?(called_method[:name].to_s))
+              @classNodes.each do |class_node_depend|
+                if class_node_depend.has_method?(called_method) 
+                  add_dependency(classNode.class_name , class_node_depend.class_name)
+                end
+              end
+            end
+          end            
+        end
+      end
+
+  end
+
   
-    def add_dependency(class_name, dependent_class)
-        if @graph[class_name][dependent_class] 
-            @graph[class_name][dependent_class] += 1
+    def add_dependency(classNode, classNodeDepend)
+        if @graph[classNode][classNodeDepend] 
+            @graph[classNode][classNodeDepend] += 1
         else 
-            @graph[class_name][dependent_class] = 1
+            @graph[classNode][classNodeDepend] = 1
         end 
     end
 
   
-    def get_dependencies_of_class(class_name)
-      @graph[class_name]
-    end
 
-    def get_intra_dependencies(class_name) 
-        @graph[class_name][class_name] || 0
+    def get_intra_dependencies(classNode) 
+        @graph[classNode.class_name][classNode.class_name] || 0
     end
 
 
-    def get_inter_dependencies_of_class(class_name) 
+    def get_inter_dependencies_of_class(classNode) 
       count = 0
-      @graph[class_name].each_value do |dependency_count|
+      @graph[classNode.class_name].each_value do |dependency_count|
         count += dependency_count
       end
-      if (@graph[class_name][class_name]) 
+      if (@graph[classNode.class_name][classNode.class_name]) 
           count = count - @graph[class_name][class_name]
       end
       count      
@@ -97,23 +138,12 @@ class DependencyGraph
         f_data += f_sim_data
       end
       f_data = f_data / ( cluster.class_names.size * (cluster.class_names.size - 1 ) / 2  + 1.0e-10)
+      # if (f_data != 0 )
+      #   puts "\n\n cluster #{cluster.class_names} => #{f_data}"
+      # end
       f_data 
     end
   
-    def print_dependencies(class_name)
-        dependencies = get_dependencies(class_name)
-        puts "Dependencies for #{class_name}:"
-        dependencies.each do |dependent_class, dependency_count|
-          puts "#{dependent_class}: #{dependency_count}"
-        end
-        puts "\n\n"
-    end
-
-    def print_all_dependencies
-        @graph.each_key do |class_name|
-          print_dependencies(class_name)
-        end
-    end
 
     def add_data(class_name , data_entity)
       if (!@data[class_name].include?(data_entity)) 

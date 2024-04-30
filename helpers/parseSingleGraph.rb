@@ -1,9 +1,21 @@
 require 'parser/current'
 
 
-puts "Enter your file path"
-path = gets.chomp
-puts "You entered: #{path}"
+if ARGV.size != 1
+  puts "\n\n"
+  puts   "----------------------------------------------------"
+  puts   "|          Usage: ruby single.rb <argument>        |"
+  puts   "----------------------------------------------------"
+  puts "\n"
+  exit 1
+end
+
+# Concatenate the arguments into a single string
+path = ARGV.join(' ')
+
+# puts "Enter your file path"
+# path = gets.chomp
+# puts "You entered: #{path}"
 
 
 source_code = File.read(path)
@@ -16,9 +28,9 @@ parser = Parser::CurrentRuby.new
 
 ast = parser.parse(buffer)
 
-puts ast
 
-File.write('parse_ast.txt', ast)
+
+File.write('./output/parse_ast.txt', ast)
 
   class ASTExtractor < Parser::AST::Processor
     attr_reader :class_name, :methods_list, :called_methods , :module_name , :receivers
@@ -129,7 +141,7 @@ File.write('parse_ast.txt', ast)
   end
 
   def createDotFile(dot_structure)
-    File.open("./output/call_graph.dot", "w") do |file|
+    File.open("./output/call_graph_single.dot", "w") do |file|
       file.puts 'digraph CallGraph {'
       file.puts "node [shape=box, style=filled, fillcolor=lightblue  , color=white]"
       file.puts 'ranksep=5;'
@@ -159,8 +171,8 @@ createDotFile(dot_structure)
 
 
 
-system("dot -Tsvg ./output/call_graph.dot -o ./output/call_graph.svg")
+system("dot -Tsvg ./output/call_graph_single.dot -o ./output/call_graph_single.svg")
 
-puts "\n\ file done => ./output/call_graph.dot => ./output/call_graph.svg "
+puts "\n\ file done => ./output/call_graph_single.dot => ./output/call_graph_single.svg "
 
   

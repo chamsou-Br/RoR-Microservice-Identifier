@@ -5,20 +5,21 @@ require "./helpers/FilesAccess"
 folder_path = "./input/controllers"
 
 
-  def format_calls_architecture(methods_list , called_methods)
-    calls_architecture = []
-  
-    methods_list.each do |calling_method|
-      called_methods_list = called_methods[calling_method] || []
-      formatted_method = {
-        calling_method: calling_method.to_s,
-        called_methods: called_methods_list.map(&:to_s)
-      }
-      calls_architecture << formatted_method
-    end
-  
-    return calls_architecture
+
+def format_calls_architecture(methods_list , called_methods)
+  calls_architecture = []
+
+  methods_list.each do |calling_method|
+    called_methods_list = called_methods[calling_method[:name]] || []
+    formatted_method = {
+      calling_method: calling_method[:name].to_s,
+      called_methods: called_methods_list,
+    }
+    calls_architecture << formatted_method
   end
+
+  return calls_architecture
+end
   
 
   def geDotFileObject(structure)
@@ -41,14 +42,14 @@ folder_path = "./input/controllers"
               desired_table.push(dot_line)
           else
               called_methods.each do |called_method|
-                  if (called_method.include?("?"))
-                      called_method.sub!("?", "")
-                      dot_line = calling_method + " -> " + called_method + ";"
-                  elsif (called_method.include?("!"))
-                      called_method.sub!("!", "")
-                      dot_line = calling_method + " -> " + called_method + ";"
+                  if (called_method[:name].include?("?"))
+                    called_method[:name].sub!("?", "")
+                      dot_line = calling_method + " -> " + called_method[:name] + ";"
+                  elsif (called_method[:name].include?("!"))
+                    called_method[:name].sub!("!", "")
+                      dot_line = calling_method + " -> " + called_method[:name] + ";"
                   else
-                      dot_line = calling_method + " -> " + called_method + ";"
+                      dot_line = calling_method + " -> " + called_method[:name] + ";"
                   end
                   desired_table.push(dot_line)
               end
@@ -63,7 +64,7 @@ folder_path = "./input/controllers"
 
   def createDotFile(dot_structure, file_name)
     dot_file_path = './output/call_graph.dot'
-    File.open("call_graph.dot", "w") do |file|
+    File.open("./output/call_graph.dot", "w") do |file|
         file.puts 'digraph CallGraph {'
         file.puts "node [shape=box, style=filled, fillcolor=lightblue  , color=white]"
         file.puts 'ranksep=5;'
@@ -102,7 +103,7 @@ for i in 0..(files_list.length-1)
 
   ast = parser.parse(buffer)
 
-  File.write('parse_ast.txt', ast)
+  File.write('./output/parse_ast.txt', ast)
 
 
   class_name, methods_list, called_methods , module_name = get_class_info(ast)
@@ -118,6 +119,8 @@ for i in 0..(files_list.length-1)
   all_dots << class_structure
 
 
+
+
 end
 
 
@@ -130,7 +133,7 @@ for i in 0..(all_dots.length-1)
 
 
     class_structure[:methods].each do |method|
-        method[:called_methods].select! { |m| all_methods.include?(m.to_sym) }
+        method[:called_methods].select! { |m| all_methods.include?(m) }
     end
 
 

@@ -1,0 +1,363 @@
+(class
+  (const nil :ViewersController)
+  (const nil :ActorsController)
+  (begin
+    (def :authorize_multiple?
+      (args)
+      (true))
+    (def :authorize_group?
+      (args)
+      (true))
+    (def :authorize_role?
+      (args)
+      (true))
+    (def :user_is_actor_of?
+      (args
+        (arg :wf_entity)
+        (arg :user))
+      (send
+        (lvar :user) :viewer_of?
+        (lvar :wf_entity)))
+    (def :group_is_actor_of?
+      (args
+        (arg :wf_entity)
+        (arg :group))
+      (send
+        (lvar :group) :viewer_of?
+        (lvar :wf_entity)))
+    (def :push_user_to
+      (args
+        (arg :wf_entity)
+        (arg :user))
+      (send
+        (send
+          (lvar :wf_entity) :viewers) :push
+        (lvar :user)))
+    (def :remove_user_from
+      (args
+        (arg :wf_entity)
+        (arg :user))
+      (send
+        (send
+          (lvar :wf_entity) :viewers) :destroy
+        (send
+          (lvar :user) :id)))
+    (def :push_group_to
+      (args
+        (arg :wf_entity)
+        (arg :group))
+      (send
+        (send
+          (lvar :wf_entity) :viewergroups) :push
+        (lvar :group)))
+    (def :remove_group_from
+      (args
+        (arg :wf_entity)
+        (arg :group))
+      (send
+        (send
+          (lvar :wf_entity) :viewergroups) :destroy
+        (send
+          (lvar :group) :id)))
+    (def :push_role_to
+      (args
+        (arg :wf_entity)
+        (arg :role))
+      (send
+        (send
+          (lvar :wf_entity) :viewerroles) :push
+        (lvar :role)))
+    (def :remove_role_from
+      (args
+        (arg :wf_entity)
+        (arg :role))
+      (send
+        (send
+          (lvar :wf_entity) :viewerroles) :destroy
+        (send
+          (lvar :role) :id)))
+    (def :create_role
+      (args)
+      (begin
+        (ivasgn :@role
+          (send
+            (send
+              (send nil :current_customer) :roles) :find
+            (send
+              (send nil :params) :[]
+              (sym :id))))
+        (if
+          (and
+            (send nil :authorize_role?)
+            (send
+              (send
+                (ivar :@role) :viewer_of?
+                (ivar :@wf_entity)) :!))
+          (if
+            (and
+              (and
+                (send
+                  (ivar :@wf_entity) :is_a?
+                  (const nil :Graph))
+                (send
+                  (send
+                    (ivar :@wf_entity) :linked_internal_roles) :include?
+                  (ivar :@role)))
+              (send
+                (send
+                  (send
+                    (ivar :@wf_entity) :groupgraph) :auto_role_viewer) :!))
+            (send nil :flash_x_error
+              (send
+                (send nil :wording) :[]
+                (sym :role_not_pushed_internal))
+              (sym :method_not_allowed))
+            (if
+              (send nil :push_role_to
+                (ivar :@wf_entity)
+                (ivar :@role))
+              (send nil :flash_x_success
+                (send
+                  (send nil :wording) :[]
+                  (sym :role_is_pushed)))
+              (send nil :flash_x_error
+                (send
+                  (send nil :wording) :[]
+                  (sym :role_not_pushed))
+                (sym :internal_server_error))))
+          (send nil :flash_x_error
+            (send
+              (send nil :wording) :[]
+              (dsym
+                (str "role_is_actor_of_")
+                (begin
+                  (send
+                    (send
+                      (send
+                        (ivar :@wf_entity) :class) :name) :downcase))))
+            (sym :method_not_allowed)))))
+    (def :destroy_role
+      (args)
+      (begin
+        (ivasgn :@role
+          (send
+            (send
+              (send nil :current_customer) :roles) :find
+            (send
+              (send nil :params) :[]
+              (sym :id))))
+        (if
+          (and
+            (send nil :authorize_role?)
+            (send
+              (ivar :@role) :viewer_of?
+              (ivar :@wf_entity)))
+          (if
+            (and
+              (and
+                (send
+                  (ivar :@wf_entity) :is_a?
+                  (const nil :Graph))
+                (send
+                  (send
+                    (ivar :@wf_entity) :linked_internal_roles) :include?
+                  (ivar :@role)))
+              (send
+                (send
+                  (ivar :@wf_entity) :groupgraph) :auto_role_viewer))
+            (send nil :flash_x_error
+              (send
+                (send nil :wording) :[]
+                (sym :role_not_removed_internal))
+              (sym :method_not_allowed))
+            (if
+              (send nil :remove_role_from
+                (ivar :@wf_entity)
+                (ivar :@role))
+              (send nil :flash_x_success
+                (send
+                  (send nil :wording) :[]
+                  (sym :role_is_removed)))
+              (send nil :flash_x_error
+                (send
+                  (send nil :wording) :[]
+                  (sym :role_not_removed))
+                (sym :internal_server_error))))
+          (send nil :flash_x_error
+            (send
+              (send nil :wording) :[]
+              (dsym
+                (str "role_not_actor_of_")
+                (begin
+                  (send
+                    (send
+                      (send
+                        (ivar :@wf_entity) :class) :name) :downcase))))
+            (sym :method_not_allowed)))))
+    (def :wording
+      (args
+        (optarg :count
+          (int 1)))
+      (hash
+        (pair
+          (sym :user_is_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.user_is_pushed")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :group_is_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.group_is_pushed")))
+        (pair
+          (sym :role_is_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.role_is_pushed")))
+        (pair
+          (sym :user_is_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.user_is_removed")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :group_is_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.group_is_removed")))
+        (pair
+          (sym :role_is_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.successes.role_is_removed")))
+        (pair
+          (sym :user_is_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_is_actor_of_graph")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :user_not_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_not_actor_of_graph")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :user_is_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_is_actor_of_document")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :user_not_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_not_actor_of_document")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :group_is_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_is_actor_of_graph")))
+        (pair
+          (sym :group_not_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_not_actor_of_graph")))
+        (pair
+          (sym :role_is_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_is_actor_of_graph")))
+        (pair
+          (sym :role_not_actor_of_graph)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_actor_of_graph")))
+        (pair
+          (sym :role_is_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_is_actor_of_document")))
+        (pair
+          (sym :role_not_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_actor_of_document")))
+        (pair
+          (sym :group_is_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_is_actor_of_document")))
+        (pair
+          (sym :group_not_actor_of_document)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_not_actor_of_document")))
+        (pair
+          (sym :user_not_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_not_pushed")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :group_not_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_not_pushed")))
+        (pair
+          (sym :role_not_pushed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_pushed")))
+        (pair
+          (sym :user_not_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.user_not_removed")
+            (hash
+              (pair
+                (sym :count)
+                (lvar :count)))))
+        (pair
+          (sym :group_not_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.group_not_removed")))
+        (pair
+          (sym :role_not_removed)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_removed")))
+        (pair
+          (sym :role_not_pushed_internal)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_pushed_internal")))
+        (pair
+          (sym :role_not_removed_internal)
+          (send
+            (const nil :I18n) :t
+            (str "controllers.viewers.errors.role_not_removed_internal")))))))

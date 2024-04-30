@@ -1,0 +1,55 @@
+digraph Microservices {
+  subgraph microservice_1 {
+    AuditElementsController;
+    ContributorsController;
+    GroupsController;
+    RegistrationsController;
+    SearchController;
+    SettingsController;
+    UsersController;
+    NotificationMailer;
+    ScanInstance;
+    ExternalUsersService;
+    SsoUsersService;
+    ApplicationHelper;
+  }
+  subgraph microservice_2 {
+    AuditsController;
+    TasksController;
+    NotifierService;
+  }
+  subgraph microservice_3 {
+    DirectoriesController;
+    RepositoryController;
+    ApplicationHelper;
+    SearchHelper;
+  }
+  subgraph microservice_4 {
+    DocumentsController;
+    ExternalUsersService;
+    SsoUsersService;
+    ApplicationHelper;
+  }
+  subgraph microservice_5 {
+    GraphsController;
+    TagsHelper;
+    ApplicationHelper;
+    ExternalUsersService;
+    SsoUsersService;
+  }
+  subgraph microservice_6 {
+    ResourcesController;
+    ResourcesHelper;
+    RolesHelper;
+    ExternalUsersService;
+    SsoUsersService;
+  }
+  subgraph microservice_7 {
+    RolesController;
+    TagsHelper;
+    ExternalUsersService;
+    SsoUsersService;
+    ResourcesHelper;
+    RolesHelper;
+  }
+}

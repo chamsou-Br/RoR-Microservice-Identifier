@@ -42,7 +42,6 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
                   class_of_called_method = class_of_all_methods[all_methods.index(called_method)] || ""
 
                   if (class_of_called_method.to_s != class_name.to_s && !not_needed_methods.include?(called_method[:name]))
-                    puts "#{class_name} => #{class_of_called_method} => #{called_method}"
                     if (called_method[:name].include?("?"))
                         called_method[:name].sub!("?", "")
                         dot_line = class_name.to_s +  " -> " + class_of_called_method + ";"
