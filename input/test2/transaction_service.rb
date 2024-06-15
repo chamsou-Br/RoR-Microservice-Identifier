@@ -4,8 +4,8 @@ class TransactionService
     end
   
     def initiate_transaction(product, buyerId)
-        buyer = Buyer.find_buyer(buyerId)
-      @transaction_manager.initiate_transaction_manager(product, buyer)
+        buyer = BuyerService.find_buyer(buyerId)
+        @transaction_manager.initiate_transaction_manager(product, buyer)
     end
   
     def process_payment(amount)
@@ -14,10 +14,10 @@ class TransactionService
   
     def confirm_transaction_mnager(transaction_id)
       @transaction_manager.confirm_transaction(transaction_id)
-      currentUser.graphs.find(1)
+      currentUser.transactions.find(1)
     end
 
     def find_transaction
-      Document.find(1)
+      Transaction.find(1)
     end
   end

@@ -1,4 +1,4 @@
-class Foo > ActorClass
+class Foo
     attr_accessor :x
     def set_x(y, is_different)
         initialize_x(y) if is_different

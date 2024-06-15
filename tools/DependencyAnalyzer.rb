@@ -30,7 +30,7 @@ class DependencyAnalyzer
           receivers: classNode.data_entities
         }
 
-        if (classNode.class_name.include?("Controller"))
+        if (classNode.class_name.include?("Controller") || classNode.class_name.include?("Service") || classNode.class_name.include?("Process") || classNode.class_name.include?("Manager"))
           class_structure[:receivers].each do |receiver|
             @dataNodes.each do |dataNode|
               if (dataNode.class_name == receiver.to_s) 

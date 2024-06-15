@@ -4,8 +4,8 @@ class AnnounceService
     end
   
     def create_announce(productId, sellerId)
-      Seller.find_seller(sellerId)
-      Product.find_product(productId)
+      SellerService.find_seller(sellerId)
+      ProductService.find_product(productId)
       @announce_manager.create_announce_manager(product, seller)
     end
   
@@ -21,5 +21,6 @@ class AnnounceService
     end
 
     def find_announce(id)
+      Invitation.find(id)
     end
   end

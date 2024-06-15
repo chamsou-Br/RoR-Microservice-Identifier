@@ -17,7 +17,7 @@ class FilesManager
             
             astParserClass = ASTParserClass.new(file_path , source_code , ClassType::ClassController)
 
-            File.write('parse_ast.txt', astParserClass.get_ast)
+            File.write('./output/parse_ast.txt', astParserClass.get_ast)
     
             classes << astParserClass.get_class_info
 

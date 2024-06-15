@@ -1,4 +1,4 @@
-class Product
+class ProductService
     attr_reader :name, :price
   
     def initialize(name, price)
@@ -7,6 +7,6 @@ class Product
     end
 
     def find_product(id) 
-      Graph.find(1)
+      Product.find(1)
     end
   end

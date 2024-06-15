@@ -1,4 +1,4 @@
-class Buyer
+class BuyerService
   
     attr_reader :name
   

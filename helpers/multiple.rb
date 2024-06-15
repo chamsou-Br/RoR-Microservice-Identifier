@@ -1,8 +1,9 @@
 require 'parser/current'
 require './helpers/ASTExtractor'
 require "./helpers/FilesAccess"
+require "./helpers/DotFile"
 
-folder_path = "./input/controllers"
+folder_path = "./input/testt"
 
 
 
@@ -22,7 +23,7 @@ def format_calls_architecture(methods_list , called_methods)
 end
   
 
-  def geDotFileObject(structure)
+  def geDotFileObjectMult(structure)
     desired_table = []
     dot_line = ""
   
@@ -85,6 +86,7 @@ end
 
 all_methods = []
 all_dots = []
+class_of_all_methods = []
   
 files_list = getFilesFromFolder(folder_path) #return paths of all files inside a folder in addition to its children folders
 
@@ -106,20 +108,24 @@ for i in 0..(files_list.length-1)
   File.write('./output/parse_ast.txt', ast)
 
 
-  class_name, methods_list, called_methods , module_name = get_class_info(ast)
+  class_name, methods_list, called_methods , module_name , _ , variables = get_class_info(ast)
 
   class_structure = {
     module: module_name,
     class: class_name,
-    methods: format_calls_architecture(methods_list , called_methods)
+    methods: format_calls_architecture(methods_list , called_methods),
+    variables: variables
   }
 
   all_methods.concat(methods_list)
 
+  methods_name = methods_list.map { |m| m[:name].to_sym}
+
+  methods_name.each do |calling_method| 
+    class_of_all_methods << class_name.to_s
+  end
+
   all_dots << class_structure
-
-
-
 
 end
 
@@ -133,11 +139,13 @@ for i in 0..(all_dots.length-1)
 
 
     class_structure[:methods].each do |method|
-        method[:called_methods].select! { |m| all_methods.include?(m) }
+      method[:called_methods].select! do |m|
+          all_methods.any? { |am| am[:name] == m[:name] && am[:num_args] == m[:num_args] }
+      end
     end
 
 
-    dot_structure = geDotFileObject(class_structure) 
+    dot_structure = geDotFileObject(class_structure , all_methods , class_of_all_methods , class_structure[:variables] , true) 
 
     createDotFile(dot_structure , file_name)
 

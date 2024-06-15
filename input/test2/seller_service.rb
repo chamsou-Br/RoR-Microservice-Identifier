@@ -1,4 +1,4 @@
-class Seller
+class SellerService
     attr_reader :name
   
     def initialize(name)

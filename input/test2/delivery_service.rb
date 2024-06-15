@@ -9,7 +9,7 @@ class DeliveryService
     end
   
     def update_delivery_status(delivery_id, status)
-      Role.find(1)
+      Transaction.find(1)
       @delivery_process.update_delivery_status_schedule(delivery_id, status)
     end
   

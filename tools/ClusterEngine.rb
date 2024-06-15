@@ -87,11 +87,12 @@ def self.identify_msa_condidates(dependencies, dendro , alpha , beta)
           stack_clusters.push(child1)
           stack_clusters.push(child2)
         else
+          # pp cluster_parent[:cluster]
+          # puts "score = #{get_score_quality_of_all_ms(dependencies , s_old_clusters , cluster_parent[:cluster] , alpha , beta )} \n\n"
           msa << cluster_parent[:cluster]
         end
       end
     end
-  
     msa
   end
 
@@ -194,9 +195,9 @@ def self.identify_msa_condidates(dependencies, dendro , alpha , beta)
                 end
               end
             end
-            class_dependeces.each do |class_name_depend|
-              file.puts "    #{class_name_depend};"
-            end
+            # class_dependeces.each do |class_name_depend|
+            #   file.puts "    #{class_name_depend};"
+            # end
             file.puts "  }"
           end
           file.puts "}"

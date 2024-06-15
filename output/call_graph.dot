@@ -1,23 +1,14 @@
 digraph CallGraph {
-node [shape=box, style=filled, fillcolor=lightblue  , color=white]
 ranksep=5;
 nodesep=0.5;
 node [fontname=Arial];
 edge [fontname=Arial];
-authorize_multiple;
-authorize_group;
-authorize_role;
-user_is_actor_of;
-group_is_actor_of;
-push_user_to;
-remove_user_from;
-push_group_to;
-remove_group_from;
-push_role_to;
-remove_role_from;
-create_role -> authorize_role;
-create_role -> push_role_to;
-destroy_role -> authorize_role;
-destroy_role -> remove_role_from;
-wording;
+Bar -> Foo;
+Bar [shape=box, style=filled, fillcolor=lightblue  , color=white];
+Foo [shape=box, style=filled, fillcolor=lightblue  , color=white];
+Baz -> Bar;
+Baz [shape=box, style=filled, fillcolor=lightblue  , color=white];
+Baz -> Foo;
+Foo2 -> Bar;
+Foo2 [shape=box, style=filled, fillcolor=lightblue  , color=white];
 }

@@ -23,15 +23,16 @@ def geDotFileObjectForData(structure,data)
 #------- MANAGE DOTFILE -------#
 # create a table with a dot file structure by taking the calling methods
 # in addition to called methods and add "-> & ;""
-def geDotFileObject(structure,all_methods,class_of_all_methods)
+def geDotFileObject(structure,all_methods,class_of_all_methods , variables = nil , multi = false)
     desired_table = []
     dot_line = "" #each line of the dot file
     class_name = structure[:class]
   
     # predefined methods excluded from the call graph
+    # not_needed_methods = []
     not_needed_methods = ['send', 'create' ,'new', 'initialize', 'find', 'save', 'update', 'delete', 'destroy', 'join',
                           'split', 'sort', 'length', 'size', 'count', 'get', 'set', 'include', 'is_a',"destroy","resource"]
-  
+
     structure[:methods].each do |method|
         called_methods = method[:called_methods]
         calling_method = method[:calling_method] 
@@ -39,24 +40,46 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
   
           if (!method[:called_methods].empty?)
               called_methods.each do |called_method|
-                  class_of_called_method = class_of_all_methods[all_methods.index(called_method)] || ""
 
-                  if (class_of_called_method.to_s != class_name.to_s && !not_needed_methods.include?(called_method[:name]))
-                    if (called_method[:name].include?("?"))
-                        called_method[:name].sub!("?", "")
-                        dot_line = class_name.to_s +  " -> " + class_of_called_method + ";"
-                    elsif (called_method[:name].include?("!"))
-                        called_method[:name].sub!("!", "")
-                        dot_line = class_name.to_s +  " -> " + class_of_called_method + ";"
-                    elsif (called_method[:name].length == 1 || not_needed_methods.include?(called_method)) # to remove calls of methods like "t" or "l" + remove calls of "new"
-                      dot_line = class_name.to_s + ";"
-                    else
-                      dot_line = class_name.to_s  + " -> " + class_of_called_method + ";"
+                  called = {name: called_method[:name] , num_args: called_method[:num_args]}
+                  reciever = called_method[:reciever]
+                  indexes = []
+                  isDetected = false
+                  if (reciever && reciever != class_name ) 
+                    if (class_of_all_methods.include?(reciever))
+                      indexes << reciever.capitalize
+                      isDetected = true
+                    elsif variables 
+                      results = []
+                      results = variables[calling_method].select { |item| item[:name] == reciever } if variables[calling_method]
+                      results += variables["initialize"].select { |item| item[:name] == reciever } if variables["initialize"]
+                      if (results.length > 0)
+                        isDetected = true
+                        results.each do |res|
+                          indexes << res[:value]
+                        end
+                      end
                     end
+                  end
+
+                  if isDetected == false
+                    all_methods.each_with_index do |element, index|
+                      indexes << class_of_all_methods[index] || "" if element == called 
+                    end
+                  end
+
+                indexes.each do |class_of_called_method|    
+                  if (( class_of_called_method.to_s != class_name.to_s || multi == true ) && !not_needed_methods.include?(called_method[:name]) && ( (reciever != "self" && reciever != class_name) || multi == true ))
+                    input =  class_name.to_s 
+                    output = class_of_called_method 
+                    input += "_" + calling_method + "_" if multi == true
+                    output += "_" + called[:name] + "_" if multi == true
+                    dot_line = input +  " -> " + output + ";"
                     desired_table.push(dot_line)
-                    desired_table.push("#{class_name.to_s} [shape=box, style=filled, fillcolor=lightblue  , color=white];")
-                    desired_table.push("#{class_of_called_method.to_s} [shape=box, style=filled, fillcolor=lightblue  , color=white];")
+                    desired_table.push("#{input} [shape=box, style=filled, fillcolor=lightblue  , color=white];")
+                    desired_table.push("#{output} [shape=box, style=filled, fillcolor=lightblue  , color=white];")
                 end
+              end
               end
           end
         end
@@ -66,6 +89,7 @@ def geDotFileObject(structure,all_methods,class_of_all_methods)
 
     # copy content of the table into the dot file
 def createDotFile(dot_structure, file_name , unique = false)
+
     dot_file_path = file_name
   
     File.open(dot_file_path, "w") do |file|

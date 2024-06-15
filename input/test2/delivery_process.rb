@@ -8,7 +8,7 @@ class DeliveryProcess
     def update_delivery_status_schedule(delivery_id, status)
       # Code to update the delivery status
       puts "Delivery #{delivery_id} status updated to #{status}."
-      Role.update(1)
+      Transaction.update(1)
     end
   
     def cancel_delivery_schedule(delivery_id)
